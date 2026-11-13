@@ -340,6 +340,7 @@ impl Core {
         v.display.fg = display.fg.or(v.display.fg.take());
         v.display.bg = display.bg.or(v.display.bg.take());
         v.display.cursor = display.cursor.or(v.display.cursor.take());
+        v.display.palette = display.palette.or(v.display.palette.take());
         v.display.cell = display.cell.or(v.display.cell);
         let display = st.viewers[&id]
             .iter()

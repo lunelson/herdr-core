@@ -136,6 +136,26 @@ fn display_changes_notify_an_idle_subscribed_program() {
 }
 
 #[test]
+fn palette_facts_reach_a_running_program_and_survive_updates_without_one() {
+    let s = Session::new();
+    let received = s.root.join("replies");
+    let probe = script(
+        &s,
+        &format!("stty raw -echo; (w query; printf '\\033]4;1;?\\007') & echo READY; cat > {}", received.display()),
+    );
+    let t = run(&s, &["sh", "-c", &probe]);
+    let mut v = Viewer::attach(&s, &t, 80, 24, json!({"display": {"palette": ["#000000", "#111111"]}}));
+    v.shows("READY");
+    // A theme switch sends a new palette; a later update without one keeps it.
+    v.conn.send(v.channel, wire::FACTS, br##"{"palette":["#000000","#e06c75"]}"##);
+    v.conn.send(v.channel, wire::FACTS, br##"{"bg":"#000000"}"##);
+    v.conn.call("terminal.get", json!({"terminal": t}));
+    touch(&s, "query");
+    let replies = || std::fs::read(&received).unwrap_or_default();
+    wait_until("the new palette answers the query", || replies() == b"\x1b]4;1;rgb:e0e0/6c6c/7575\x07");
+}
+
+#[test]
 fn in_band_resize_reports_belong_to_the_viewer_not_the_core() {
     let s = Session::new();
     let probe = script(

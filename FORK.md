@@ -14,7 +14,7 @@ It's paired with a fork build of the app from the sibling checkout `../herdr-app
 - PR branches (e.g. `fix/display-palette`): cut from `upstream/master`, carrying one patch each. Upstream work happens on branches like these, never on `fork`.
 - `master`: tracks upstream; keep it untouched.
 
-Remotes: `origin` is lunelson/herdr-core, `upstream` is herdrdev/herdr-core.
+Remotes: `origin` is lunelson/herdr-core, `upstream` is herdrdev/herdr-core. Every local branch is pushed to `origin` and tracks it, PR branches too, whether or not their PR is open (`git push -u origin <branch>`).
 
 ## Patches carried on `fork`
 
@@ -38,7 +38,7 @@ Builds need Zig 0.16 (`crates/ghostty-sys` builds libghostty-vt from `vendor/gho
 6. Then update the app fork, which carries the other half of the patch (`../herdr-app/FORK.md`: core first, then app, and the checks for both).
 7. `git push --force-with-lease origin fork`. After a rebase, `fork` and `origin/fork` have diverged on purpose: don't `git pull`, which would merge the old history back in.
 
-Also rebase open PR branches on `upstream/master`.
+Also rebase PR branches on `upstream/master` and push them (`git push --force-with-lease origin <branch>`).
 
 ## Going back to the official core
 

@@ -20,7 +20,7 @@ Remotes: `origin` is lunelson/herdr-core, `upstream` is herdrdev/herdr-core. Eve
 
 | Patch | Upstream | Status |
 |---|---|---|
-| `fix: answer palette queries with the viewer's theme colors (#827)` and `fix: keep the palette when a viewer's display facts change (#827)`: display facts accept `palette`, so programs asking for ANSI colors (OSC 4) get the theme's colors, not libghostty's defaults | issue [herdrdev/herdr-app#827](https://github.com/herdrdev/herdr-app/issues/827); PR branch `fix/display-palette` | diagnosis posted on #827 2026-11-13, waiting on Can; PR not opened yet |
+| `fix: answer palette queries with the viewer's theme colors (#827)` and `fix: keep the palette when a viewer's display facts change (#827)`: display facts accept `palette`, so programs asking for ANSI colors (OSC 4) get the theme's colors, not libghostty's defaults | issue [herdrdev/herdr-app#827](https://github.com/herdrdev/herdr-app/issues/827); PR [herdrdev/herdr-core#402](https://github.com/herdrdev/herdr-core/pull/402) (`fix/display-palette`) | draft PR opened 2026-11-24 |
 
 Update this table when a patch is added, lands upstream, or is dropped.
 

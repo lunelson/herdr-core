@@ -7,6 +7,7 @@ use std::process::Command;
 pub const EXECUTABLE: &str = "Contents/MacOS/herdr-core";
 const REQUIREMENT: &str =
     "=identifier \"dev.herdr.core\" and anchor apple generic and certificate leaf[subject.OU] = \"2W9652Q7QR\"";
+const LOCAL_REQUIREMENT: &str = "=identifier \"dev.herdr.core\" and certificate leaf[subject.CN] = \"Herdr Local Dev\"";
 const LSREGISTER: &str =
     "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
 
@@ -34,8 +35,12 @@ pub fn verify(path: &Path, local: bool) -> io::Result<()> {
     if verify(REQUIREMENT).is_ok() {
         return Ok(());
     }
-    // Explicit local builds can be ad-hoc, but another team's signature is never ours.
+    // Explicit local builds can be ad-hoc or signed with the local fork cert,
+    // but another team's signature is never ours.
     if local {
+        if verify(LOCAL_REQUIREMENT).is_ok() {
+            return Ok(());
+        }
         let out = Command::new("/usr/bin/codesign").arg("-dv").arg(path).output()?;
         if String::from_utf8_lossy(&out.stderr).lines().any(|line| line == "Signature=adhoc") {
             return verify("=identifier \"dev.herdr.core\"");

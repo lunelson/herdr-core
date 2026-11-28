@@ -66,6 +66,7 @@ fn script(s: &Scratch, name: &str, args: impl IntoIterator<Item = impl AsRef<OsS
 fn mac_sign_uses_runtime_and_entitlements_even_for_ad_hoc_builds() {
     let s = Scratch::new();
     stub(&s, "codesign", "exit 0");
+    stub(&s, "security", "exit 0");
     std::fs::create_dir_all(s.root.join("herdr-core/Contents/MacOS")).unwrap();
     let out = script(&s, "mac-sign", [s.root.join("herdr-core")]).output().unwrap();
     assert!(out.status.success(), "{out:?}");
@@ -73,10 +74,32 @@ fn mac_sign_uses_runtime_and_entitlements_even_for_ad_hoc_builds() {
     assert!(calls.contains("--options runtime"), "{calls}");
     assert!(calls.contains("--entitlements ") && calls.contains("macos-entitlements.plist"), "{calls}");
     assert!(calls.contains("--identifier dev.herdr.core"), "{calls}");
+    assert!(calls.contains("--sign -"), "{calls}");
     assert!(calls.contains("--verify --strict"), "{calls}");
-    let lines: Vec<_> = calls.lines().collect();
-    assert!(lines[0].ends_with("/Contents/MacOS/herdr-core"), "nested executable first: {calls}");
-    assert!(lines[1].ends_with("/herdr-core"), "then bundle: {calls}");
+    let signs: Vec<_> = calls.lines().filter(|line| line.starts_with("codesign --force")).collect();
+    assert!(signs[0].ends_with("/Contents/MacOS/herdr-core"), "nested executable first: {calls}");
+    assert!(signs[1].ends_with("/herdr-core"), "then bundle: {calls}");
+}
+
+#[test]
+fn mac_sign_prefers_local_signing_cert_when_available() {
+    let s = Scratch::new();
+    stub(&s, "codesign", "exit 0");
+    stub(&s, "security", "echo '  1) DEADBEEF \"Herdr Local Dev\" (CSSMERR_TP_NOT_TRUSTED)'");
+    std::fs::create_dir_all(s.root.join("herdr-core/Contents/MacOS")).unwrap();
+    let out = script(&s, "mac-sign", [s.root.join("herdr-core")]).output().unwrap();
+    assert!(out.status.success(), "{out:?}");
+    let calls = std::fs::read_to_string(s.root.join("calls")).unwrap();
+    let signs: Vec<_> = calls.lines().filter(|line| line.starts_with("codesign --force")).collect();
+    assert_eq!(signs.len(), 2, "{calls}");
+    for sign in signs {
+        assert!(sign.contains("--sign DEADBEEF"), "{sign}");
+        assert!(!sign.contains("--timestamp"), "{sign}");
+    }
+    let out = script(&s, "mac-sign", [s.root.join("herdr-core")]).env("HERDR_CODESIGN_IDENTITY", "-").output().unwrap();
+    assert!(out.status.success(), "{out:?}");
+    let calls = std::fs::read_to_string(s.root.join("calls")).unwrap();
+    assert!(calls.contains("--sign -"), "{calls}");
 }
 
 #[test]
